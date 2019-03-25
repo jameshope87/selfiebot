@@ -13,8 +13,22 @@ imgdir = "/home/pi/Pictures/booth/"
 printcmd = "lp -d ZJ-58 -o fit-to-page"
 camera = PiCamera()
 filename = ''
-#camera.start_preview()
+
+camera.rotation = 0
+camera.hflip = True
+camera.start_preview()
+
 button = Button(2)
+
+def printOverlay(string_to_print):
+    print(string_to_print)
+    camera.annotate_text = string_to_print
+
+def removeOverlay(overlay_id)
+    if overlay_id != -1
+        camera.remove_overlay(overlay_id)
+
+
 
 def processImage(image):
     photo = Image.open(imgdir + "current/{}.jpg".format(image))
@@ -53,6 +67,7 @@ def printImages():
     subprocess.run(command)
 
 if __name__ == '__main__':
+    camera = PiCamera()
     sleep(2)
     while True:
         print("Ready")
