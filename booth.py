@@ -35,29 +35,31 @@ except ImportError as missing_module:
 currentimgdir = "/home/pi/Pictures/booth/current/"
 archiveimgdir = "/home/pi/Pictures/booth/archive/"
 printcmd = "lp -d ZJ-58 -o fit-to-page"
-camera_button = 2
+camera_button = 4
 numberOfPhotos = 3
-photoDelay = 3
+prepDelay = 2
 SCREEN_W = 800
 SCREEN_H = 480
+COUNTDOWN = 3
 
 
-###################
-# Camera Setup   ##
-###################
+##################
+## Camera Setup ##
+##################
+camera = picamera.PiCamera()
 camera.rotation = 0
 camera.hflip = True
-camera.start_preview()
 
-###################
-# GPIO Setup     ##
-###################
+
+################
+## GPIO Setup ##
+################
 
 button = Button(camera_button)
 
-###################
-# Helper Functions#
-###################
+######################
+## Helper Functions ##
+######################
 
 def folderCheck():
     folders_list = [currentimgdir, archiveimgdir]
@@ -81,13 +83,13 @@ def printOverlay(string_to_print):
     print(string_to_print)
     camera.annotate_text = string_to_print
     
-def determine_filename(now):
+def determineFilenamePrefix():
     """
     Works out the file name based off the current datetime
     """
+    now = datetime.now()
     filename = archiveimgdir + '{0:%Y-%m-%d %H:%M:%S}'.format(now)
-    filename += '-{}.jpg'.format(i)
-    return filename
+    return filename, now
 
 def removeOverlay(overlay_id)
     """
@@ -148,6 +150,18 @@ def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
         o_id = -1 # '-1' indicates there is no overlay
         
     return o_id # if we have an overlay (o_id > 0), we will need to remove it later
+
+#############
+## Screens ##
+#############
+
+def prepForPhotoScreen(photoNumber, filename):
+    """
+    Prompt the user to get ready for the next photo
+    """
+    
+    get_ready_image = REAL_PATH + '/assets/get_ready_' + str(photoNumber) + '.png'
+    overlay_image(get_ready_image, prepDelay, 3, 'RGBA')
     
 def processImage(image):
     photo = Image.open(currentimgdir + "{}.jpg".format(image))
@@ -155,38 +169,136 @@ def processImage(image):
     photo = enh.enhance(1.5)
     photo.save(currentimgdir + "{}.jpg".format(image))
 
-def captureImages():
-    now = datetime.now()
-    #print(now)
-    for i in range (1,numberOfPhotos + 1):
-        camera.capture(currentimgdir + "{}.jpg".format(i))
-        print("Image {} captured".format(i))
-        filename = determine_filename(now)
-        shutil.copyfile(currentimgdir + "1.jpg", filename)
-        processImage(i)
-        sleep(photoDelay)
-    f = open(currentimgdir + "name.txt", "w+")
-    f.write("Name: {0:%Y-%m-%d %H:%M:%S}".format(now))
-    f.close()
-    ## print images
-    printImages()
-    ## delete temporary images
-    command = 'rm ' + currentimgdir + '*'
-    process = subprocess.Popen(command, shell=True)
-    process.wait
+def captureImages(photoNumber, filenamePrefix):
+    """
+    Function to actualy capture the photo, process it and save a copy to the archive
+    """
+    filename = filenamePrefix + '-{}.jpg'.format(photoNumber)
+    
+    #countdown and display on screen
+    for counter in range(COUNTDOWN, 0, -1):
+        printOverlay("             ..." + str(counter))
+        sleep(1)
+        
+    #Take a still image
+    camera.annotate_text = ''
+    camera.capture(currentimgdir + "{}.jpg".format(photoNumber))
+    print("Image {} captured".format(i))
+    shutil.copyfile(currentimgdir + "{}.jpg".format(photoNumber), filename)
+    processImage(photoNumber)
 
-def printImages():
+def playbackScreen(filenamePrefix):
+    """
+    Review photos before printing
+    """
+    prevOverlay = False
+    for photoNumber in range(1, numberOfPhotos + 1)
+        filename = filenamePrefix + '-{}.jpg'.format(photoNumber)
+        thisOverlay = overlay_image(filename, False, (3 + numberOfPhotos))
+        
+        if prevOverlay:
+            removeOverlay(prevOverlay)
+        sleep(2)
+        prevOverlay = thisOverlay
+        
+    removeOverlay(prevOverlay)
+    
+
+def printImages(currTime):
+    f = open(currentimgdir + "name.txt", "w+")
+    f.write("Name: {0:%Y-%m-%d %H:%M:%S}".format(currTime))
+    f.close()
     files = glob.glob(currentimgdir + '*')
     #print(files)
     command = shlex.split(printcmd)
     command += files
     #print(command)
     subprocess.run(command)
+    ## delete temporary images
+    command = 'rm ' + currentimgdir + '*'
+    process = subprocess.Popen(command, shell=True)
+    process.wait
+    
+    #All done
+    print('All Done!')
+    finishedImage = REAL_PATH + 'assets/all_done_delayed_upload.png'
+    overlay_image(finishedImage, 5)
+
+def shutterPressed():
+    global shutterHasBeenPressed
+    shutterHasBeenPressed = True
+    
+def main:
+
+    """
+    Main program loop
+    """
+    #Start Program
+    print('Welcome to the photo booth!')
+    print('(version ' + __version__ + ')')
+    print('')
+    print('Press the \'Take photo\' button to take a photo')
+    print('Use [Ctrl] + [\\] to exit')
+    print('')
+    sleep(2)
+    #Setup required folders
+    folderCheck()
+    
+    #start camera preview
+    camera.start_preview(resolution=(SCREEN_W, SCREEN_H))
+    
+    #Display Intro screens
+    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
+    intro_image_2 = REAL_PATH + '/assets/intro_2.png'
+    overlay_1 = overlay_image(intro_image_1, 0, 3)
+    overlay_2 = overlay_image(intro_image_2, 0, 4)
+    
+    #Wait for button press
+    i = 0
+    blink_speed = 10
+    
+    button.when_pressed = shutterPressed
+    
+    while True:
+        shutterHasBeenPressed = False
+        #Stay in loop until button is pressed
+        if shutterHasBeenPressed is True:
+            i += 1
+            if i == blink_speed:
+                overlay_2.alpha = 255
+            elif i == (2 * blink_speed):
+                overlay_2.alpha = 0
+                i = 0
+            #Restart while loop
+            sleep(0.1)
+            continue
+            
+        #button has been pressed!
+        print("Button Pressed!")
+        removeOverlay(overlay_2)
+        removeOverlay(overlay_1)
+        #get filename
+        filenamePrefix, now = determineFilenamePrefix()
+        
+        for photoNumber in range(1, numberOfPhotos + 1):
+            prepForPhotoScreen(photoNumber)
+            captureImages(photoNumber, filenamePrefix)
+        
+        printImages(now)
+        playbackScreen(filenamePrefix)
+        
+        overlay_1 = overlay_image(intro_image_1, 0, 3)
+        overlay_2 = overlay_image(intro_image_2, 0, 4)
+        print("press the button!")
 
 if __name__ == '__main__':
-    camera = PiCamera()
-    sleep(2)
-    while True:
-        print("Ready")
-        button.wait_for_press()
-        captureImages()
+    try:
+        main()
+        
+    except KeyboardInterrupt:
+        print('Goodbye')
+        
+    finally:
+        camera.stop_preview()
+        camera.close()
+        sys.exit()
