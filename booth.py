@@ -13,7 +13,7 @@ REAL_PATH = os.path.dirname(os.path.realpath(__file__))
 try:
     from PIL import Image
     from PIL import ImageEnhance
-    from picamera import PiCamera
+    import picamera
     from gpiozero import Button
 	
 except ImportError as missing_module:
@@ -66,7 +66,7 @@ def folderCheck():
     folders_checked = []
     
     for folder in folders_list:
-        if folder not in folders_checked
+        if folder not in folders_checked:
             folders_checked.append(folder)
         else:
             print('ERROR: Cannot use same folder path ('+folder+') twice. Refer config file.')
@@ -91,11 +91,11 @@ def determineFilenamePrefix():
     filename = archiveimgdir + '{0:%Y-%m-%d %H:%M:%S}'.format(now)
     return filename, now
 
-def removeOverlay(overlay_id)
+def removeOverlay(overlay_id):
     """
     Removes overlay if there is one
     """
-    if overlay_id != -1
+    if overlay_id != -1:
         camera.remove_overlay(overlay_id)
         
 def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
@@ -130,7 +130,7 @@ def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
     ))
 
     # Paste the original image
-    pad.Paste(img, (0, 0))
+    pad.paste(img, (0, 0))
     
     # Get the padded image data
     try:
@@ -155,7 +155,7 @@ def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
 ## Screens ##
 #############
 
-def prepForPhotoScreen(photoNumber, filename):
+def prepForPhotoScreen(photoNumber):
     """
     Prompt the user to get ready for the next photo
     """
@@ -183,7 +183,7 @@ def captureImages(photoNumber, filenamePrefix):
     #Take a still image
     camera.annotate_text = ''
     camera.capture(currentimgdir + "{}.jpg".format(photoNumber))
-    print("Image {} captured".format(i))
+    print("Image {} captured".format(photoNumber))
     shutil.copyfile(currentimgdir + "{}.jpg".format(photoNumber), filename)
     processImage(photoNumber)
 
@@ -192,7 +192,7 @@ def playbackScreen(filenamePrefix):
     Review photos before printing
     """
     prevOverlay = False
-    for photoNumber in range(1, numberOfPhotos + 1)
+    for photoNumber in range(1, numberOfPhotos + 1):
         filename = filenamePrefix + '-{}.jpg'.format(photoNumber)
         thisOverlay = overlay_image(filename, False, (3 + numberOfPhotos))
         
@@ -213,29 +213,29 @@ def printImages(currTime):
     command = shlex.split(printcmd)
     command += files
     #print(command)
-    subprocess.run(command)
+    #subprocess.run(command)
     ## delete temporary images
     command = 'rm ' + currentimgdir + '*'
-    process = subprocess.Popen(command, shell=True)
-    process.wait
+    #process = subprocess.Popen(command, shell=True)
+    #process.wait
     
     #All done
     print('All Done!')
-    finishedImage = REAL_PATH + 'assets/all_done_delayed_upload.png'
+    finishedImage = REAL_PATH + '/assets/all_done_delayed_upload.png'
     overlay_image(finishedImage, 5)
 
 def shutterPressed():
     global shutterHasBeenPressed
     shutterHasBeenPressed = True
     
-def main:
+def main():
 
     """
     Main program loop
     """
     #Start Program
     print('Welcome to the photo booth!')
-    print('(version ' + __version__ + ')')
+    #print('(version ' + __version__ + ')')
     print('')
     print('Press the \'Take photo\' button to take a photo')
     print('Use [Ctrl] + [\\] to exit')
@@ -248,20 +248,21 @@ def main:
     camera.start_preview(resolution=(SCREEN_W, SCREEN_H))
     
     #Display Intro screens
-    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
+    ##intro_image_1 = REAL_PATH + '/assets/intro_1.png'
     intro_image_2 = REAL_PATH + '/assets/intro_2.png'
-    overlay_1 = overlay_image(intro_image_1, 0, 3)
+    ##overlay_1 = overlay_image(intro_image_1, 0, 3)
     overlay_2 = overlay_image(intro_image_2, 0, 4)
     
     #Wait for button press
-    i = 0
-    blink_speed = 10
+    ##i = 0
+    ##blink_speed = 10
     
-    button.when_pressed = shutterPressed
+    ##button.when_pressed = shutterPressed
     
     while True:
-        shutterHasBeenPressed = False
+        ##shutterHasBeenPressed = False
         #Stay in loop until button is pressed
+        """
         if shutterHasBeenPressed is True:
             i += 1
             if i == blink_speed:
@@ -272,11 +273,12 @@ def main:
             #Restart while loop
             sleep(0.1)
             continue
-            
+        """
+        button.wait_for_press()
         #button has been pressed!
         print("Button Pressed!")
         removeOverlay(overlay_2)
-        removeOverlay(overlay_1)
+        #removeOverlay(overlay_1)
         #get filename
         filenamePrefix, now = determineFilenamePrefix()
         
@@ -287,7 +289,7 @@ def main:
         printImages(now)
         playbackScreen(filenamePrefix)
         
-        overlay_1 = overlay_image(intro_image_1, 0, 3)
+        #overlay_1 = overlay_image(intro_image_1, 0, 3)
         overlay_2 = overlay_image(intro_image_2, 0, 4)
         print("press the button!")
 
@@ -297,8 +299,9 @@ if __name__ == '__main__':
         
     except KeyboardInterrupt:
         print('Goodbye')
-        
+"""
     finally:
         camera.stop_preview()
         camera.close()
         sys.exit()
+"""
