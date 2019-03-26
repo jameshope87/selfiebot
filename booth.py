@@ -248,22 +248,21 @@ def main():
     camera.start_preview(resolution=(SCREEN_W, SCREEN_H))
     
     #Display Intro screens
-    ##intro_image_1 = REAL_PATH + '/assets/intro_1.png'
+    intro_image_1 = REAL_PATH + '/assets/intro_1.png'
     intro_image_2 = REAL_PATH + '/assets/intro_2.png'
-    ##overlay_1 = overlay_image(intro_image_1, 0, 3)
+    overlay_1 = overlay_image(intro_image_1, 0, 3)
     overlay_2 = overlay_image(intro_image_2, 0, 4)
     
     #Wait for button press
-    ##i = 0
-    ##blink_speed = 10
+    i = 0
+    blink_speed = 10
     
-    ##button.when_pressed = shutterPressed
+    button.when_pressed = shutterPressed
     
     while True:
-        ##shutterHasBeenPressed = False
+        shutterHasBeenPressed = False
         #Stay in loop until button is pressed
-        """
-        if shutterHasBeenPressed is True:
+        if shutterHasBeenPressed is False:
             i += 1
             if i == blink_speed:
                 overlay_2.alpha = 255
@@ -273,12 +272,10 @@ def main():
             #Restart while loop
             sleep(0.1)
             continue
-        """
-        button.wait_for_press()
-        #button has been pressed!
+        button has been pressed!
         print("Button Pressed!")
         removeOverlay(overlay_2)
-        #removeOverlay(overlay_1)
+        removeOverlay(overlay_1)
         #get filename
         filenamePrefix, now = determineFilenamePrefix()
         
@@ -289,7 +286,7 @@ def main():
         printImages(now)
         playbackScreen(filenamePrefix)
         
-        #overlay_1 = overlay_image(intro_image_1, 0, 3)
+        overlay_1 = overlay_image(intro_image_1, 0, 3)
         overlay_2 = overlay_image(intro_image_2, 0, 4)
         print("press the button!")
 
