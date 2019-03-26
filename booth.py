@@ -41,7 +41,7 @@ prepDelay = 2
 SCREEN_W = 800
 SCREEN_H = 480
 COUNTDOWN = 3
-
+shutterHasBeenPressed = False
 
 ##################
 ## Camera Setup ##
@@ -216,8 +216,8 @@ def printImages(currTime):
     #subprocess.run(command)
     ## delete temporary images
     command = 'rm ' + currentimgdir + '*'
-    #process = subprocess.Popen(command, shell=True)
-    #process.wait
+    process = subprocess.Popen(command, shell=True)
+    process.wait
     
     #All done
     print('All Done!')
@@ -260,6 +260,7 @@ def main():
     button.when_pressed = shutterPressed
     
     while True:
+        global shutterHasBeenPressed
         shutterHasBeenPressed = False
         #Stay in loop until button is pressed
         if shutterHasBeenPressed is False:
@@ -272,7 +273,7 @@ def main():
             #Restart while loop
             sleep(0.1)
             continue
-        button has been pressed!
+        #button has been pressed!
         print("Button Pressed!")
         removeOverlay(overlay_2)
         removeOverlay(overlay_1)
