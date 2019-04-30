@@ -36,20 +36,22 @@ currentimgdir = "/home/pi/Pictures/booth/current/"
 archiveimgdir = "/home/pi/Pictures/booth/archive/"
 printcmd = "lp -d ZJ-58 -o fit-to-page"
 camera_button = 4
-numberOfPhotos = 3
+numberOfPhotos = 1
 prepDelay = 2
-SCREEN_W = 800
-SCREEN_H = 480
+SCREEN_W = 480
+SCREEN_H = 800
 COUNTDOWN = 3
 shutterHasBeenPressed = False
+PHOTO_W = 768
+PHOTO_H = 1024
 
 ##################
 ## Camera Setup ##
 ##################
 camera = picamera.PiCamera()
-camera.rotation = 0
+camera.resolution = (PHOTO_W, PHOTO_H)
+camera.rotation = 90
 camera.hflip = True
-
 
 ################
 ## GPIO Setup ##
@@ -185,6 +187,7 @@ def captureImages(photoNumber, filenamePrefix):
     camera.capture(currentimgdir + "{}.jpg".format(photoNumber))
     print("Image {} captured".format(photoNumber))
     shutil.copyfile(currentimgdir + "{}.jpg".format(photoNumber), filename)
+    print("Image copied to " + filename)
     processImage(photoNumber)
 
 def playbackScreen(filenamePrefix):
@@ -205,15 +208,20 @@ def playbackScreen(filenamePrefix):
     
 
 def printImages(currTime):
+    files = [REAL_PATH + "/assets/1st-image.png"]
+    files += glob.glob(currentimgdir + '*')
+    logoname = REAL_PATH + "/assets/Powered-by-Pi.png"
+    files.append(logoname)
+    message = "Find your files online at www.something.com/{0:%Y-%m-%d %H:%M:%S}".format(currTime)
     f = open(currentimgdir + "name.txt", "w+")
-    f.write("Name: {0:%Y-%m-%d %H:%M:%S}".format(currTime))
+    f.write(message)
     f.close()
-    files = glob.glob(currentimgdir + '*')
+    files.append(currentimgdir + "name.txt")
     #print(files)
     command = shlex.split(printcmd)
     command += files
     #print(command)
-    #subprocess.run(command)
+    subprocess.run(command)
     ## delete temporary images
     command = 'rm ' + currentimgdir + '*'
     process = subprocess.Popen(command, shell=True)
@@ -225,11 +233,13 @@ def printImages(currTime):
     overlay_image(finishedImage, 5)
 
 def shutterPressed():
+    print("Button press registered")
     global shutterHasBeenPressed
     shutterHasBeenPressed = True
+    #print(shutterHasBeenPressed)
     
 def main():
-
+    global shutterHasBeenPressed
     """
     Main program loop
     """
@@ -260,8 +270,8 @@ def main():
     button.when_pressed = shutterPressed
     
     while True:
-        global shutterHasBeenPressed
-        shutterHasBeenPressed = False
+        #shutterHasBeenPressed = False
+        #print(shutterHasBeenPressed)
         #Stay in loop until button is pressed
         if shutterHasBeenPressed is False:
             i += 1
@@ -289,6 +299,7 @@ def main():
         
         overlay_1 = overlay_image(intro_image_1, 0, 3)
         overlay_2 = overlay_image(intro_image_2, 0, 4)
+        shutterHasBeenPressed = False
         print("press the button!")
 
 if __name__ == '__main__':
@@ -297,9 +308,9 @@ if __name__ == '__main__':
         
     except KeyboardInterrupt:
         print('Goodbye')
-"""
+
     finally:
+        print("Stopping things")
         camera.stop_preview()
         camera.close()
         sys.exit()
-"""
