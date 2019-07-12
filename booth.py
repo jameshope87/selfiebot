@@ -38,19 +38,19 @@ printcmd = "lp -d ZJ-58 -o fit-to-page"
 camera_button = 4
 numberOfPhotos = 1
 prepDelay = 2
-SCREEN_W = 480
-SCREEN_H = 800
+SCREEN_W = 800
+SCREEN_H = 480
 COUNTDOWN = 3
 shutterHasBeenPressed = False
-PHOTO_W = 768
-PHOTO_H = 1024
+PHOTO_W = 1024
+PHOTO_H = 768
 
 ##################
 ## Camera Setup ##
 ##################
 camera = picamera.PiCamera()
 camera.resolution = (PHOTO_W, PHOTO_H)
-camera.rotation = 90
+#camera.rotation = 90
 camera.hflip = True
 
 ################
@@ -100,7 +100,7 @@ def removeOverlay(overlay_id):
     if overlay_id != -1:
         camera.remove_overlay(overlay_id)
         
-def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
+def overlay_image(image_path, duration=0, layer=3,mode='RGBA'):
     """
     Add an overlay (and sleep for an optional duration).
     If sleep duration is not supplied, then overlay will need to be removed later.
@@ -132,7 +132,7 @@ def overlay_image(image_path, duration=0, layer=3,mode='RGB'):
     ))
 
     # Paste the original image
-    pad.paste(img, (0, 0))
+    pad.paste(img, (0, 0), img)
     
     # Get the padded image data
     try:
@@ -197,7 +197,7 @@ def playbackScreen(filenamePrefix):
     prevOverlay = False
     for photoNumber in range(1, numberOfPhotos + 1):
         filename = filenamePrefix + '-{}.jpg'.format(photoNumber)
-        thisOverlay = overlay_image(filename, False, (3 + numberOfPhotos))
+        thisOverlay = overlay_image(filename, False, (3 + numberOfPhotos), 'RGB')
         
         if prevOverlay:
             removeOverlay(prevOverlay)
@@ -261,7 +261,7 @@ def main():
     intro_image_1 = REAL_PATH + '/assets/intro_1.png'
     intro_image_2 = REAL_PATH + '/assets/intro_2.png'
     overlay_1 = overlay_image(intro_image_1, 0, 3)
-    overlay_2 = overlay_image(intro_image_2, 0, 4)
+    overlay_2 = overlay_image(intro_image_2, 0, 0)
     
     #Wait for button press
     i = 0
@@ -276,9 +276,9 @@ def main():
         if shutterHasBeenPressed is False:
             i += 1
             if i == blink_speed:
-                overlay_2.alpha = 255
+                overlay_2.layer = 4
             elif i == (2 * blink_speed):
-                overlay_2.alpha = 0
+                overlay_2.layer = 0
                 i = 0
             #Restart while loop
             sleep(0.1)
@@ -295,7 +295,7 @@ def main():
             captureImages(photoNumber, filenamePrefix)
         
         printImages(now)
-        playbackScreen(filenamePrefix)
+        #playbackScreen(filenamePrefix)
         
         overlay_1 = overlay_image(intro_image_1, 0, 3)
         overlay_2 = overlay_image(intro_image_2, 0, 4)
