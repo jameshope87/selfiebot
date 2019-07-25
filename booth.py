@@ -220,11 +220,11 @@ def printImages(currTime):
     f = open(currentimgdir + "name.txt", "w+")
     f.write(message)
     f.close()
-    files.append(currentimgdir + "name.txt")
-    print(files)
+    #files.append(currentimgdir + "name.txt")
+    #print(files)
     command = shlex.split(printcmd)
     command += files
-    print(command)
+    #print(command)
     subprocess.run(command)
     ## delete temporary images
     command = 'rm ' + currentimgdir + '*'
