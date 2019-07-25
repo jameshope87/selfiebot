@@ -209,7 +209,11 @@ def playbackScreen(filenamePrefix):
 
 def printImages(currTime):
     files = [REAL_PATH + "/assets/1st-image.png"]
+    logoname = REAL_PATH + "/Header.jpg"
+    files.append(logoname)
     files += glob.glob(currentimgdir + '*')
+    logoname = REAL_PATH + "/Footer.jpg"
+    files.append(logoname)
     logoname = REAL_PATH + "/assets/Powered-by-Pi.png"
     files.append(logoname)
     message = "Find your files online at www.something.com/{0:%Y-%m-%d %H:%M:%S}".format(currTime)
@@ -217,10 +221,10 @@ def printImages(currTime):
     f.write(message)
     f.close()
     files.append(currentimgdir + "name.txt")
-    #print(files)
+    print(files)
     command = shlex.split(printcmd)
     command += files
-    #print(command)
+    print(command)
     subprocess.run(command)
     ## delete temporary images
     command = 'rm ' + currentimgdir + '*'
